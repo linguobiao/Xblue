@@ -46,6 +46,12 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         setContentView(R.layout.activity_device);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_list);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeLayout);
+        findViewById(R.id.bt_scan).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                searchDevice();
+            }
+        });
         initView();
     }
 
@@ -53,6 +59,7 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         mDevices = new ArrayList<>();
         mMacs = new ArrayList<>();
         mSwipeRefreshLayout.setOnRefreshListener(this);
+        mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setColorSchemeColors(Color.rgb(47, 223, 189));
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         pullToRefreshAdapter = new PullToRefreshAdapter(mDevices);
@@ -63,6 +70,7 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
                 SdkManager.getInstance().getClient().stopSearch();
                 Intent intent = new Intent();
                 intent.putExtra("mac", ByteUtils.getDevice(mDevices.get(position)).getMac());
+                intent.putExtra("name", ByteUtils.getDevice(mDevices.get(position)).getName());
                 setResult(RESULT_OK, intent);
                 finish();
             }

@@ -15,7 +15,7 @@ public class LogHelper {
     }
 
     public static String buildLog(String log) {
-        return _SDK + ":" + log;
+        return log;
     }
 
 }

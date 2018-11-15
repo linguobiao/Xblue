@@ -6,11 +6,11 @@
     tools:context=".main.MainActivity">
 
     <RelativeLayout
-        android:id="@+id/ly_show"
+        android:id="@+id/ly_device"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:background="#f0f0f0">
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
 
         <TextView
             android:id="@+id/tv_state"
@@ -24,11 +24,40 @@
             android:id="@+id/bt_connect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/tv_state"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="20dp"
+            android:layout_alignParentRight="true"
             android:textSize="14dp"
             android:text="连接"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/ly_show"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:background="#f0f0f0"
+        android:layout_below="@id/ly_device">
+
+        <Button
+            android:id="@+id/bt_clear_show"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:textSize="14dp"
+            android:text="清除显示"/>
+
+        <TextView
+            android:id="@+id/tv_byte_show"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/bt_clear_show"
+            android:layout_marginLeft="10dp"
+            android:textSize="14dp"
+            android:text="已接收：0字节"/>
 
         <Switch
             android:id="@+id/switch_show"
@@ -70,16 +99,28 @@
         android:id="@+id/ly_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
+        android:layout_above="@+id/et_input"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:background="#f0f0f0">
 
         <Button
-            android:id="@+id/bt_clear"
+            android:id="@+id/bt_clear_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:textSize="14dp"
-            android:text="清除显示"/>
+            android:text="清除输入"/>
+
+        <TextView
+            android:id="@+id/tv_byte_input"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/bt_clear_input"
+            android:layout_marginLeft="10dp"
+            android:textSize="14dp"
+            android:text="已发送：0字节"/>
 
         <Switch
             android:id="@+id/switch_input"
@@ -98,10 +139,8 @@
     <EditText
         android:id="@+id/et_input"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/ly_input"
+        android:layout_height="120dp"
         android:layout_above="@+id/bt_send"
-        android:digits="0123456789qwertyuioplkjhgfdsazxcvbnmQWERTYUIOPLKJHGFDSAZXCVBNM-.@#$%_+ "
         android:gravity="top"
         android:padding="10dp"
         android:textSize="14dp"

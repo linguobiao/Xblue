@@ -162,6 +162,7 @@ public class BleUtils implements SdkApi{
             public void onNotify(UUID service, UUID character, byte[] value) {
                 LogHelper.log("notify : " + Arrays.toString(value));
                 syncListener.onResult(true, value, "sync success");
+                cancelTimer();
             }
 
             @Override
@@ -186,6 +187,7 @@ public class BleUtils implements SdkApi{
             fail("Bluetooth address is not available");
             return;
         }
+        this.boundMac = mac;
         initTimer();
         write(mac, value);
     }
@@ -232,6 +234,7 @@ public class BleUtils implements SdkApi{
             countDownTimer = new CountDownTimer(syncTimeOut * 1000, 1000) {
                 public void onTick(long millisUntilFinished) {}
                 public void onFinish() {
+                    SdkManager.getInstance().getClient().clearRequest(boundMac, 0);
                     cancelTimer();
                     fail("sync time out");
                     if (semaphore != null) semaphoreListener.onSync(false, null);
@@ -247,4 +250,11 @@ public class BleUtils implements SdkApi{
             countDownTimer.cancel();
         }
     }
+
+//    mClient.clearRequest(MAC, clearType);
+// Constants.REQUEST_READ，所有读请求
+// Constants.REQUEST_WRITE，所有写请求
+// Constants.REQUEST_NOTIFY，所有通知相关的请求
+// Constants.REQUEST_RSSI，所有读信号强度的请求
+//    clearType表示要清除的请求类型，如果要清除多种请求，可以将多种类型取或，如果要清除所有请求，则传入0。
 }
