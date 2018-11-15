@@ -9,6 +9,11 @@ import android.widget.Toast;
  */
 public class StringHelper {
 
+    public static final String EDIT_FILTER = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n";
+
+    /**
+     * 构建指令
+     */
     public static byte[] buildBytes(String text, boolean isHex) {
 
         if (TextUtils.isEmpty(text)) {
@@ -28,6 +33,9 @@ public class StringHelper {
     }
 
 
+    /**
+     * 输入框里面的HEX和字符串之间转换
+     */
     public static void initInput(EditText editText, boolean isHex) {
         String input = editText.getText().toString().trim().replaceAll(" ", "");
         if (TextUtils.isEmpty(input)) {

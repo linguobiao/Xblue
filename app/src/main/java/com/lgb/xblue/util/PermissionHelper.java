@@ -10,6 +10,9 @@ import android.support.v4.content.ContextCompat;
 
 public class PermissionHelper {
 
+    /**
+     * 检查是否有权限
+     */
     public static boolean checkBluetoothPermission(Activity activity) {
         if (Build.VERSION.SDK_INT >= 23) {
             //校验是否已具有模糊定位权限
@@ -24,7 +27,10 @@ public class PermissionHelper {
         return false;
     }
 
-    public static boolean isPermision(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    /**
+     * 动态申请权限结果
+     */
+    public static boolean isPermission(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1002) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 //同意权限

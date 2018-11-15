@@ -13,14 +13,14 @@ import android.view.View;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
-import com.lgb.xblue.adapter.PullToRefreshAdapter;
-import com.lgb.xblue.R;
-import com.xblue.sdk.manager.SdkManager;
-import com.xblue.sdk.manager.ByteUtils;
 import com.inuker.bluetooth.library.connect.listener.BluetoothStateListener;
 import com.inuker.bluetooth.library.search.SearchRequest;
 import com.inuker.bluetooth.library.search.SearchResult;
 import com.inuker.bluetooth.library.search.response.SearchResponse;
+import com.lgb.xblue.R;
+import com.lgb.xblue.adapter.PullToRefreshAdapter;
+import com.xblue.sdk.manager.ByteUtils;
+import com.xblue.sdk.manager.SdkManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +49,7 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         findViewById(R.id.bt_scan).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //扫描设备
                 searchDevice();
             }
         });
@@ -67,7 +68,10 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         mRecyclerView.addOnItemTouchListener(new OnItemClickListener() {
             @Override
             public void onSimpleItemClick(final BaseQuickAdapter adapter, final View view, final int position) {
+                //选中一个设备
+                //停止扫描
                 SdkManager.getInstance().getClient().stopSearch();
+                //返回主界面
                 Intent intent = new Intent();
                 intent.putExtra("mac", ByteUtils.getDevice(mDevices.get(position)).getMac());
                 intent.putExtra("name", ByteUtils.getDevice(mDevices.get(position)).getName());
@@ -79,65 +83,26 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         SdkManager.getInstance().getClient().registerBluetoothStateListener(new BluetoothStateListener() {
             @Override
             public void onBluetoothStateChanged(boolean openOrClosed) {
-                if (openOrClosed) searchDevice();
+                if (openOrClosed) searchDevice();//扫描设备
             }
         });
+        //手机蓝牙未开启
         if (!SdkManager.getInstance().getClient().isBluetoothOpened()) {
             SdkManager.getInstance().getClient().openBluetooth();
             return;
         }
+        //扫描设备
         searchDevice();
 
     }
 
+    /**
+     * 扫描设备
+     */
     private void searchDevice() {
         mDevices.clear();
         mMacs.clear();
         pullToRefreshAdapter.notifyDataSetChanged();
-        search();
-    }
-
-    @Override public void onRefresh() {searchDevice();}
-    private long lastTime = 0;
-
-    public void onSearchResult(SearchResult device) {
-        mSwipeRefreshLayout.setRefreshing(false);
-//        if ("HMSoft".equals(device.getName()) || "Guoou".equals(device.getName()) || "Coating".equals(device.getName())) {
-            String mac = ByteUtils.getDevice(device).getMac();
-            if (!mDevices.contains(device) && !mMacs.contains(mac)) {
-                mDevices.add(device);
-                mMacs.add(mac);
-                SdkManager.getInstance().setAvailableDevices(mDevices);
-                Collections.sort(mDevices, new Comparator<SearchResult>() {
-                    @Override
-                    public int compare(SearchResult device1, SearchResult device2) {
-                        return (int) (device2.rssi - device1.rssi);
-                    }
-                });
-                pullToRefreshAdapter.notifyDataSetChanged();
-            } else {
-                for (SearchResult deviceSave : mDevices) {
-                    if (deviceSave.getAddress().equals(device.getAddress())) {
-                        deviceSave.rssi = device.rssi;
-                        break;
-                    }
-                }
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastTime >= 500) {
-                    lastTime = currentTime;
-                    Collections.sort(mDevices, new Comparator<SearchResult>() {
-                        @Override
-                        public int compare(SearchResult device1, SearchResult device2) {
-                            return (int) (device2.rssi - device1.rssi);
-                        }
-                    });
-                    pullToRefreshAdapter.notifyDataSetChanged();
-                }
-            }
-//        }
-    }
-
-    public void search() {
         if (!SdkManager.getInstance().getClient().isBluetoothOpened()) {
             mSwipeRefreshLayout.setRefreshing(false);
             SdkManager.getInstance().getClient().openBluetooth();
@@ -146,6 +111,7 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
         if (bluetoothAdapter == null) bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter.isDiscovering()) {bluetoothAdapter.cancelDiscovery();}
 
+        //扫描蓝牙设备，如果不需要扫描经典蓝牙，可不用调searchBluetoothClassicDevice方法
         SearchRequest request = new SearchRequest.Builder()
                 .searchBluetoothLeDevice(3000, 2)       // 先扫BLE设备2次，每次3s
                 .searchBluetoothClassicDevice(5000, 2)  // 再扫经典蓝牙2次，每次5s
@@ -153,6 +119,48 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
                 .searchBluetoothClassicDevice(5000, 2)  // 再扫经典蓝牙2次，每次5s
                 .build();
         SdkManager.getInstance().getClient().search(request, mSearchResponse);
+    }
+
+    @Override public void onRefresh() {searchDevice();}
+    private long lastTime = 0;
+
+    /**
+     * 扫描到设备
+     * 按照信号强弱排序并显示在列表上
+     */
+    public void onSearchResult(SearchResult device) {
+        mSwipeRefreshLayout.setRefreshing(false);
+        String mac = ByteUtils.getDevice(device).getMac();
+        if (!mDevices.contains(device) && !mMacs.contains(mac)) {
+            mDevices.add(device);
+            mMacs.add(mac);
+            SdkManager.getInstance().setAvailableDevices(mDevices);
+            Collections.sort(mDevices, new Comparator<SearchResult>() {
+                @Override
+                public int compare(SearchResult device1, SearchResult device2) {
+                    return (int) (device2.rssi - device1.rssi);
+                }
+            });
+            pullToRefreshAdapter.notifyDataSetChanged();
+        } else {
+            for (SearchResult deviceSave : mDevices) {
+                if (deviceSave.getAddress().equals(device.getAddress())) {
+                    deviceSave.rssi = device.rssi;
+                    break;
+                }
+            }
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastTime >= 500) {
+                lastTime = currentTime;
+                Collections.sort(mDevices, new Comparator<SearchResult>() {
+                    @Override
+                    public int compare(SearchResult device1, SearchResult device2) {
+                        return (int) (device2.rssi - device1.rssi);
+                    }
+                });
+                pullToRefreshAdapter.notifyDataSetChanged();
+            }
+        }
     }
 
     private final SearchResponse mSearchResponse = new SearchResponse() {

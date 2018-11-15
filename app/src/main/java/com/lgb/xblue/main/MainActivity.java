@@ -39,37 +39,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private StringBuilder showHexBuilder = new StringBuilder();
     private StringBuilder showStrBuilder = new StringBuilder();
-    private String mac;
-    private String name;
+    private String mac, name;
 
     private int byte_show, byte_input;
+    private ProgressDialog dialog;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         scrollView = findViewById(R.id.scrollView);
-        tv_state = findViewById(R.id.tv_state);
-        tv_show = findViewById(R.id.tv_show);
-        tv_byte_show = findViewById(R.id.tv_byte_show);
-        tv_byte_input = findViewById(R.id.tv_byte_input);
-        et_input = findViewById(R.id.et_input);
-        bt_connect = findViewById(R.id.bt_connect);
-        switch_show = findViewById(R.id.switch_show);
-        switch_input = findViewById(R.id.switch_input);
+        tv_state = findViewById(R.id.tv_state);             //设备连接状态
+        tv_show = findViewById(R.id.tv_show);               //显示收到的数据
+        tv_byte_show = findViewById(R.id.tv_byte_show);     //已接收字节数
+        tv_byte_input = findViewById(R.id.tv_byte_input);   //已输入字节数
+        et_input = findViewById(R.id.et_input);             //输入的数据
+        bt_connect = findViewById(R.id.bt_connect);         //连接、断开连接按钮
+        switch_show = findViewById(R.id.switch_show);       //HEX显示、字符显示
+        switch_input = findViewById(R.id.switch_input);     //HEX输入、字符输入
         bt_connect.setOnClickListener(this);
-        findViewById(R.id.bt_clear_input).setOnClickListener(this);
-        findViewById(R.id.bt_clear_show).setOnClickListener(this);
-        findViewById(R.id.bt_send).setOnClickListener(this);
+        findViewById(R.id.bt_clear_input).setOnClickListener(this); //清除输入
+        findViewById(R.id.bt_clear_show).setOnClickListener(this);  //清除显示
+        findViewById(R.id.bt_send).setOnClickListener(this);        //发送
         switch_show.setOnCheckedChangeListener(this);
         switch_input.setOnCheckedChangeListener(this);
-        switch_show.setChecked(false);
-        switch_input.setChecked(false);
-        //设置同步数据监听器，监听同步结果
-        SdkManager.getInstance().setSyncListener(this);
-
-        String str = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n";
-        et_input.setKeyListener(DigitsKeyListener.getInstance(str));
-        et_input.setRawInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);//默认显示英文键盘
+        switch_show.setChecked(false);  //默认字符显示
+        switch_input.setChecked(false); //默认字符输入
+        et_input.setKeyListener(DigitsKeyListener.getInstance(StringHelper.EDIT_FILTER));
+        et_input.setRawInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);  //默认显示英文键盘
+        SdkManager.getInstance().setSyncListener(this); //设置同步数据监听器，监听同步结果
 //        byte[] bytes = new byte[127];
 //        for (int i = 0; i < 127; i ++) {
 //            bytes[i] = (byte) i;
@@ -101,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 clear(false);
                 break;
             case R.id.bt_send:      //点击发送
+                //设备未连接，不能发送
                 if (!SdkManager.getInstance().isConnect(mac)) {
                     Toast.makeText(MainActivity.this, "请先连接设备", Toast.LENGTH_SHORT).show();
                     return;
@@ -109,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 byte[] value = StringHelper.buildBytes(et_input.getText().toString().trim().replaceAll(" ", ""), switch_input.isChecked());
                 //发送指令
                 if (value != null) {
-                    SdkManager.getInstance().sync(mac, value);
+                    SdkManager.getInstance().sync(mac, value);//发送指令
                     initByteNumber(byte_input + value.length, false);//刷新字节数
                 }
                 break;
@@ -131,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * 选择设备返回
+     */
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1001 && resultCode == RESULT_OK) {
@@ -143,7 +144,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private ProgressDialog dialog;
     /**
      * 连接设备
      */
@@ -153,15 +153,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog = new ProgressDialog(this);
             dialog.setMessage("连接中...");
         }
-        dialog.show();
+        dialog.show();//弹框显示连接中
         SdkManager.getInstance().connectDevice(mac, new BleListener() {
             @Override
             public void onResult(boolean isSuccess) {
+                if (isSuccess) {//连接成功
+                    clear(true);//清空显示
+                    clear(false);//清空输入
+                }
                 tv_state.setText(isSuccess ? "已连接：" + name : "未连接");
                 dialog.dismiss();
                 Toast.makeText(MainActivity.this, "connect:" + isSuccess, Toast.LENGTH_SHORT).show();
-                clear(true);
-                clear(false);
             }
         });
     }
@@ -172,10 +174,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private BleConnectStatusListener bleConnectStatusListener = new BleConnectStatusListener() {
         @Override
         public void onConnectStatusChanged(String mac, int status) {
-            if (status == Constants.STATUS_CONNECTED) {
+            if (status == Constants.STATUS_CONNECTED) {//连上设备
                 tv_state.setText("已连接：" + name);
                 bt_connect.setText("断开连接");
-            } else if (status == Constants.STATUS_DISCONNECTED) {
+            } else if (status == Constants.STATUS_DISCONNECTED) {//断开设备
                 tv_state.setText("未连接");
                 bt_connect.setText("连接");
             }
@@ -185,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         // 同意蓝牙权限 -> 设备连接页面
-        if (PermissionHelper.isPermision(requestCode, permissions, grantResults)) startActivityForResult(new Intent(MainActivity.this, DeviceActivity.class), 1001);
+        if (PermissionHelper.isPermission(requestCode, permissions, grantResults)) startActivityForResult(new Intent(MainActivity.this, DeviceActivity.class), 1001);
     }
 
     /**
@@ -223,6 +225,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    /**
+     * 刷新已接收或已发送字节数
+     */
     private void initByteNumber(int number, boolean isShow) {
         if (isShow) {
             byte_show = number;
@@ -233,6 +238,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * 清空显示或输入
+     * @param isShow true:清空显示  false:清空输入
+     */
     private void clear(boolean isShow) {
         if (isShow) {
             showHexBuilder.setLength(0);
@@ -245,9 +254,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    protected void onDestroy() {
+    @Override protected void onDestroy() {
+        //解除注册
         SdkManager.getInstance().getClient().unregisterConnectStatusListener(mac, bleConnectStatusListener);
+        //断开连接
         SdkManager.getInstance().getClient().disconnect(mac);
         super.onDestroy();
     }

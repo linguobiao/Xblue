@@ -14,7 +14,9 @@ public class GoApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        //初始化蓝牙模块
         SdkManager.getInstance().init(this);
+        //初始化Context
         ContextHelper.getInstance().init(this);
     }
 }
